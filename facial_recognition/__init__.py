@@ -1,0 +1,1 @@
+from .fr_app import FacialRecognitionHandler
