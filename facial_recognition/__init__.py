@@ -1,1 +1,1 @@
-from .fr_app import FacialRecognitionHandler
+from .facial_rec import FacialRecognitionHandler

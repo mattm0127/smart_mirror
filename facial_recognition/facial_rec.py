@@ -14,7 +14,7 @@ class FacialRecognitionHandler:
                                     )
 
     def run_recognition(self,):
-        if not os.path.exists(os.path.join(os.getcwd(), self.facial_recognition.JSON_PATH)):
+        if not os.path.exists(self.facial_recognition.JSON_PATH):
             self.facial_recognition.learn_new_faces_hailo()
         try:
             face_names = self.facial_recognition.process_new_image_hailo()
@@ -26,5 +26,10 @@ class FacialRecognitionHandler:
             return None
         return face_names
 
+    def add_new_face(self):
+        self.facial_recognition.capture_new_face('matt')
+        self.facial_recognition.learn_new_faces_hailo()
+
 if __name__ == "__main__":
-    None
+    fr = FacialRecognitionHandler()
+    fr.add_new_face()
