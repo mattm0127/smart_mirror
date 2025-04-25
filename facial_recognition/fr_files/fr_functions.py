@@ -35,7 +35,7 @@ logger.addHandler(console_handler)
 
 
 def _setup_model(type: str):
-    face_det_model_name = "scrfd_10g--640x640_quant_hailort_hailo8l_1"
+    face_det_model_name = "scrfd_2.5g--640x640_quant_hailort_hailo8l_1"
     face_rec_model_name = "arcface_mobilefacenet--112x112_quant_hailort_hailo8l_1"
     inference_host_addr = "@local"
     zoo_url = "degirum/models_hailort"

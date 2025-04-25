@@ -30,15 +30,15 @@ class Widgets:
 
         if not in_frame_copy:
             return None
-        name_str = ""
+        name_str = "Hello, "
         if len(in_frame_copy) == 1:
-            name_str += in_frame_copy[0]
+            name_str += in_frame_copy[0].title()
         else:
             for x in range(len(in_frame_copy)):
                 if x == len(in_frame_copy) - 1:
-                    name_str += in_frame_copy[x]
+                    name_str += in_frame_copy[x].title()
                 else:
-                    name_str += in_frame_copy[x] + ", "
+                    name_str += in_frame_copy[x].title() + ", "
 
         names = self.smart_mirror.sans_font.render(name_str, True, (255,255,255))
         names_rect = names.get_rect()
@@ -46,7 +46,7 @@ class Widgets:
         self.smart_mirror._to_draw.append((names, names_rect))
     
     def weather_and_location(self):
-        self.weather_client.check_for_update()
+        self.weather_client.check_for_temp_update()
 
         location_str = self.weather_client.get_location()
         location = self.smart_mirror.sans_font.render(location_str, True, (255,255,255))
@@ -60,8 +60,9 @@ class Widgets:
         current_icon_rect = current_icon.get_rect()
 
         location_rect.topright = self.smart_mirror.screen_rect.topright
-        current_icon_rect.topleft = location_rect.midleft
         temp_rect.midtop = location_rect.midbottom
+        current_icon_rect.center = temp_rect.center
+        current_icon_rect.right = temp_rect.left - 20
 
         self.smart_mirror._to_draw.append((location, location_rect))
         self.smart_mirror._to_draw.append((current_icon, current_icon_rect))

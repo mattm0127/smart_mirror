@@ -16,6 +16,7 @@ class SmartMirror:
     def __init__(self):
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         self.screen_rect = self.screen.get_rect()
+        self.clock = pygame.time.Clock()
         self.sys_font = pygame.font.SysFont(None, size=48)
         self.font_size = 50
         self.title_font_size = 20
@@ -67,9 +68,9 @@ class SmartMirror:
                     in_frame_copy.remove(remove_name)
             with self.in_frame_datalock:
                 self.in_frame = in_frame_copy[:]
-            time.sleep(0.5)
+            time.sleep(1)
 
-    def _in_frame_thread_handler(self):
+    def _start_in_frame_thread(self):
         in_frame_thread = threading.Thread(target=self._update_in_frame, daemon=True)
         in_frame_thread.start()
 
@@ -83,18 +84,19 @@ class SmartMirror:
         self._to_draw = []
 
     def import_image(self, img_url):
-        img_url = 'https:'+ img_url
+        img_url = "https:" + img_url
         response = requests.get(img_url)
         img_file = BytesIO(response.content)
         img = pygame.image.load(img_file)
-        img = pygame.transform.scale(img, (100,100))
+        img = pygame.transform.scale(img, (80, 80))
         return img
-    
+
     def run_program(self):
-        self._in_frame_thread_handler()
+        self._start_in_frame_thread()
         while True:
             self._check_events()
             self._draw_screen()
+            self.clock.tick(10)
 
 
 if __name__ == "__main__":
