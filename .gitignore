@@ -5,4 +5,4 @@ facial_rec.log
 known_faces.json
 hailort.log
 .env
-current_weather.json
+forecast.json

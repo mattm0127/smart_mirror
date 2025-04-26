@@ -15,9 +15,9 @@ class WeatherClient:
 
     def __init__(self):
         self.forecast_datalock = threading.Lock()
+        self.update_lock = threading.Lock()
         self.forecast = self._load_weather_json()
         self._is_updated = True
-        self.update_lock = threading.Lock()
         self._last_update_clock = None
 
     def _ensure_weather_json_exists(self):
@@ -26,6 +26,8 @@ class WeatherClient:
 
     def _load_weather_json(self):  
         self._ensure_weather_json_exists()
+        while not os.path.exists(self._FORECAST_JSON):
+            None
         with self.forecast_datalock:
             with open(self._FORECAST_JSON) as json_file:
                 forecast = json.load(json_file)
