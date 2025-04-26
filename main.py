@@ -2,16 +2,18 @@ import pygame
 from widgets import Widgets
 import sys
 import os
+import gc
 
 class SmartMirror:
 
     pygame.init()
-    pygame.mouse.set_visible(False)
+    pygame.font.init()
 
     def __init__(self):
         """Class to run main Smart Mirror logic
         """
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        pygame.mouse.set_visible(False)
         self.screen_rect = self.screen.get_rect()
         self.clock = pygame.time.Clock()
         self.sys_font = pygame.font.SysFont(None, size=48)
@@ -25,6 +27,9 @@ class SmartMirror:
             self.m_deco_path = os.path.join(
                 os.path.dirname(os.path.abspath(__file__)), "fonts\Modern-Deco.ttf"
             )
+            self.raleway_light_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "fonts\Raleway-Light.ttf"
+            )
         else:
             self.ms_light_path = os.path.join(
                 os.path.dirname(os.path.abspath(__file__)), "fonts/ModernSans-Light.otf"
@@ -32,8 +37,12 @@ class SmartMirror:
             self.m_deco_path = os.path.join(
                 os.path.dirname(os.path.abspath(__file__)), "fonts/Modern-Deco.ttf"
             )
+            self.raleway_light_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)), "fonts/Raleway-Light.ttf"
+            )
         self.deco_font = pygame.font.Font(self.m_deco_path, self.font_size)
         self.sans_font = pygame.font.Font(self.ms_light_path, self.font_size)
+        self.raleway_font = pygame.font.Font(self.raleway_light_path, self.font_size)
         self.widgets = Widgets(self)
         self._to_draw = []
 
@@ -44,6 +53,7 @@ class SmartMirror:
         """Takes widgets from _to_draw and blits them screen
         """
         self.screen.fill((0, 0, 0))
+        self.widgets.update_alpha_values()
         self.widgets.face_rec_name()
         self.widgets.date_and_time()
         self.widgets.weather_and_location()
@@ -67,10 +77,17 @@ class SmartMirror:
     def run_program(self):
         """Runs the main loop of the Smart Mirror application
         """
-        while True:
-            self._check_events()
-            self._draw_screen()
-            self.clock.tick(30)
+        try:
+            while True:
+                self._check_events()
+                self._draw_screen()
+                self.clock.tick(30)
+        finally:
+            print('Closing Pygame')
+            pygame.quit()
+            print('Clearing resources')
+            self.widgets.facial_rec_handler.picam2.close()
+            gc.collect()
 
 if __name__ == "__main__":
     smart_mirror = SmartMirror()

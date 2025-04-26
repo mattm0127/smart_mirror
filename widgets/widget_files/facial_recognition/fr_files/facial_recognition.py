@@ -12,9 +12,9 @@ from .fr_functions import (
 
 
 class FacialRecognition:
-    file_dir = os.path.dirname(os.path.abspath(__file__))
-    JSON_PATH = file_dir + "/known_faces.json"
-    FACE_PIC_DIR = file_dir + "/known_faces"
+    _FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+    _JSON_PATH = _FILE_DIR + "/known_faces.json"
+    _FACE_PIC_DIR = _FILE_DIR + "/known_faces"
 
     def __init__(self, picam2, facial_detect_model, facial_recog_model):
         """Class to handle all Facial Recognition logic
@@ -51,7 +51,7 @@ class FacialRecognition:
             person_name (str): Name of person to add to known_faces
             num_imgs (int, optional): Number of images to take. Defaults to 5.
         """
-        new_person_folder = os.path.join(self.FACE_PIC_DIR, person_name)
+        new_person_folder = os.path.join(self._FACE_PIC_DIR, person_name)
 
         try:
             os.makedirs(new_person_folder, exist_ok=True)
@@ -78,13 +78,13 @@ class FacialRecognition:
         known_names = []
         logger.info("Creating known face encodings")
 
-        if not os.listdir(self.FACE_PIC_DIR):
+        if not os.listdir(self._FACE_PIC_DIR):
             print("No faces saved, your first.")
             name = input("What is your name: ")
             self.capture_new_face(name)
 
-        for person_name in os.listdir(self.FACE_PIC_DIR):
-            person_dir = os.path.join(self.FACE_PIC_DIR, person_name)
+        for person_name in os.listdir(self._FACE_PIC_DIR):
+            person_dir = os.path.join(self._FACE_PIC_DIR, person_name)
             for filename in os.listdir(person_dir):
                 if filename.endswith(".jpg"):
                     img_path = os.path.join(person_dir, filename)
@@ -108,17 +108,17 @@ class FacialRecognition:
         known_names = []
         logger.info("Creating known face encodings")
         try:
-            os.listdir(self.FACE_PIC_DIR)
+            os.listdir(self._FACE_PIC_DIR)
         except Exception:
-            os.mkdir(self.FACE_PIC_DIR)
+            os.mkdir(self._FACE_PIC_DIR)
 
-        if not os.listdir(self.FACE_PIC_DIR):
+        if not os.listdir(self._FACE_PIC_DIR):
             print("No faces saved, your first.")
             name = input("What is your name: ")
             self.capture_new_face(name)
 
-        for person_name in os.listdir(self.FACE_PIC_DIR):
-            person_dir = os.path.join(self.FACE_PIC_DIR, person_name)
+        for person_name in os.listdir(self._FACE_PIC_DIR):
+            person_dir = os.path.join(self._FACE_PIC_DIR, person_name)
             for filename in os.listdir(person_dir):
                 if filename.endswith(".jpg"):
                     img_path = os.path.join(person_dir, filename)
@@ -174,6 +174,7 @@ class FacialRecognition:
         frame = self.picam2.capture_array()
         try:
             detected_faces = self.facial_detect_model(frame)
+
         except Exception as e:
             print(e)
         cropped_faces = [

@@ -27,7 +27,7 @@ class FacialRecognitionHandler:
         Returns:
             [str, ]: List of names detected
         """
-        if not os.path.exists(self.facial_recognition.JSON_PATH):
+        if not os.path.exists(self.facial_recognition._JSON_PATH):
             self.facial_recognition.learn_new_faces_hailo()
         try:
             face_names = self.facial_recognition.process_new_image_hailo()

@@ -1,0 +1,90 @@
+{
+    "location": {
+        "name": "Haverstraw",
+        "region": "New York",
+        "country": "United States of America",
+        "lat": 41.1975,
+        "lon": -73.965,
+        "tz_id": "America/New_York",
+        "localtime_epoch": 1745702946,
+        "localtime": "2025-04-26 17:29"
+    },
+    "current": {
+        "last_updated": "2025-04-26 17:15",
+        "temp_c": 21.7,
+        "temp_f": 71.1,
+        "is_day": 1,
+        "condition": {
+            "text": "Partly cloudy",
+            "icon": "//cdn.weatherapi.com/weather/64x64/day/116.png",
+            "code": 1003
+        },
+        "wind_mph": 9.6,
+        "wind_kph": 15.5,
+        "wind_degree": 227,
+        "wind_dir": "SW",
+        "pressure_mb": 1006.0,
+        "pressure_in": 29.71,
+        "precip_mm": 1.28,
+        "precip_in": 0.05,
+        "humidity": 73,
+        "cloud": 75,
+        "feelslike_c": 21.7,
+        "feelslike_f": 71.1,
+        "windchill_c": 20.8,
+        "windchill_f": 69.4,
+        "heatindex_c": 21.2,
+        "heatindex_f": 70.2,
+        "dewpoint_c": 15.9,
+        "dewpoint_f": 60.7,
+        "vis_km": 16.0,
+        "vis_miles": 9.0,
+        "uv": 0.4,
+        "gust_mph": 14.5,
+        "gust_kph": 23.4
+    },
+    "forecast": {
+        "forecastday": [
+            {
+                "date": "2025-04-26",
+                "date_epoch": 1745625600,
+                "day": {
+                    "maxtemp_c": 23.8,
+                    "maxtemp_f": 74.8,
+                    "mintemp_c": 9.6,
+                    "mintemp_f": 49.3,
+                    "avgtemp_c": 16.0,
+                    "avgtemp_f": 60.7,
+                    "maxwind_mph": 14.1,
+                    "maxwind_kph": 22.7,
+                    "totalprecip_mm": 20.65,
+                    "totalprecip_in": 0.81,
+                    "totalsnow_cm": 0.0,
+                    "avgvis_km": 7.7,
+                    "avgvis_miles": 4.0,
+                    "avghumidity": 88,
+                    "daily_will_it_rain": 1,
+                    "daily_chance_of_rain": 89,
+                    "daily_will_it_snow": 0,
+                    "daily_chance_of_snow": 0,
+                    "condition": {
+                        "text": "Heavy rain",
+                        "icon": "//cdn.weatherapi.com/weather/64x64/day/308.png",
+                        "code": 1195
+                    },
+                    "uv": 0.3
+                },
+                "astro": {
+                    "sunrise": "05:59 AM",
+                    "sunset": "07:47 PM",
+                    "moonrise": "05:06 AM",
+                    "moonset": "06:43 PM",
+                    "moon_phase": "Waning Crescent",
+                    "moon_illumination": 5,
+                    "is_moon_up": 0,
+                    "is_sun_up": 0
+                }
+            }
+        ]
+    }
+}
