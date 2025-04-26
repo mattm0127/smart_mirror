@@ -12,7 +12,7 @@ The **Smart Mirror** is a Python-based application designed to transform a stand
 - **Optimized for Hailo 8L**: Enhanced AI performance for real-time applications (Degirum API Key required).
 - **Raspberry Pi 5 Support**: Lightweight and efficient, compatible with the latest Raspberry Pi hardware.
 - 
-## Demo
+## Demo of Real-Time Recognition (Covering and Un-Covering Face)
 ![Untitled video](https://github.com/user-attachments/assets/4e214729-3cf0-420c-9e10-e359da51cfa7)
 
 ## Installation
