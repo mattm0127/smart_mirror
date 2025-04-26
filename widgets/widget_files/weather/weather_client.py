@@ -12,13 +12,14 @@ class WeatherClient:
     WEATHER_DIR = os.path.dirname(os.path.abspath(__file__))
     CURRENT_WEATHER_JSON = os.path.join(WEATHER_DIR, "current_weather.json")
     FORECAST_JSON = os.path.join(WEATHER_DIR, "forecast.json")
+    ICON_DIR = os.path.join(WEATHER_DIR, 'weather_icons')
 
     def __init__(self):
         self.current_weather_datalock = threading.Lock()
         self.current_weather = self._load_weather_json()
         self._is_updated = True
         self.update_lock = threading.Lock()
-        self._last_update_clock = 5
+        self._last_update_clock = None
 
     def _ensure_weather_json_exists(self):
         if not os.path.exists(self.CURRENT_WEATHER_JSON):
@@ -88,7 +89,20 @@ class WeatherClient:
         location_str = f"{location}, {region}"
         return location_str
 
+    def _get_icon_path(self):
+        is_day = self.current_weather["current"]["is_day"]
+        code = self.current_weather["current"]['condition']['code']
+        icon_day_night_path = os.path.join(self.ICON_DIR, f'{is_day}/{code}.png')
+        icon_path = os.path.join(self.ICON_DIR, f'{code}.png')
+        cloudy_icon = os.path.join(self.ICON_DIR, '1009.png')
+        if os.path.exists(icon_day_night_path):
+            return icon_day_night_path
+        elif os.path.exists(icon_path):
+            return icon_path
+        else:
+            return cloudy_icon
+
     def get_current_temp_f(self):
         temp_f = str(self.current_weather["current"]["temp_f"])
-        icon = self.current_weather["current"]["condition"]["icon"]
+        icon = self._get_icon_path()
         return temp_f, icon

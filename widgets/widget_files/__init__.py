@@ -1,1 +1,2 @@
 from .weather.weather_client import WeatherClient
+from .facial_recognition.facial_rec import FacialRecognitionHandler

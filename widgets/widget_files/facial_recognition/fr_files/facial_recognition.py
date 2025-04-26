@@ -17,11 +17,25 @@ class FacialRecognition:
     FACE_PIC_DIR = file_dir + "/known_faces"
 
     def __init__(self, picam2, facial_detect_model, facial_recog_model):
+        """Class to handle all Facial Recognition logic
+
+        Args:
+            picam2 (Picam2): Picam2 object for image capture
+            facial_detect_model (degirum.Model): Facial detection model for Hailo 8l
+            facial_recog_model (degirum.Model): Facial recognition model for Hailo 8l
+        """
         self.picam2 = picam2
         self.facial_detect_model = facial_detect_model
         self.facial_recog_model = facial_recog_model
 
-    def _capture_and_save(self, person_name, img_num, person_folder) -> None:
+    def _capture_and_save(self, person_name, img_num, person_folder):
+        """Capture and save new images of face for model training
+
+        Args:
+            person_name (str): Name of person to add to known_faces
+            img_num (int): Number of images to be taken and saved
+            person_folder (Path): Path to new face image folder
+        """
         img_name = f"{person_name}_scan{img_num}.jpg"
         img_path = os.path.join(person_folder, img_name)
         write_success = self.picam2.capture_file(img_path)
@@ -30,7 +44,13 @@ class FacialRecognition:
         else:
             logger.error(f"Error saving image {img_num + 1}")
 
-    def capture_new_face(self, person_name, num_imgs=5) -> None:
+    def capture_new_face(self, person_name, num_imgs=5):
+        """Main function for capturing new face.
+
+        Args:
+            person_name (str): Name of person to add to known_faces
+            num_imgs (int, optional): Number of images to take. Defaults to 5.
+        """
         new_person_folder = os.path.join(self.FACE_PIC_DIR, person_name)
 
         try:
@@ -52,6 +72,8 @@ class FacialRecognition:
             )
 
     def learn_new_faces_cpu(self):
+        """Train model to learn new faces using FaceRecognition module on CPU
+        """
         known_encodings = []
         known_names = []
         logger.info("Creating known face encodings")
@@ -80,6 +102,8 @@ class FacialRecognition:
         convert_and_save_json(known_encodings, known_names)
 
     def learn_new_faces_hailo(self):
+        """Train model to learn new faces using custom model on Hailo 8l
+        """
         known_encodings = []
         known_names = []
         logger.info("Creating known face encodings")
@@ -115,6 +139,12 @@ class FacialRecognition:
         convert_and_save_json(known_encodings, known_names)
 
     def process_new_image_cpu(self):
+        """Perform Facial Detection and Recognition on new frame using
+        FaceRecognition model on CPU
+
+        Returns:
+            [str,]: List of names associated with faces from frame
+        """
         known_encodings, known_names = get_json_file()
         logger.info("Taking Image to Process.")
         frame = self.picam2.capture_array()
@@ -133,6 +163,12 @@ class FacialRecognition:
         return face_names
 
     def process_new_image_hailo(self):
+        """Perform Facial Detection and Recognition on new frame using
+        custom model on Hailo 8l
+
+        Returns:
+            [str,]: List of names associated with faces from frame
+        """
         known_encodings, known_names = get_json_file()
         logger.info("Taking Image to Process.")
         frame = self.picam2.capture_array()
