@@ -72,7 +72,8 @@ class WeatherClient:
         weather_thread.start()
 
     def _needs_weather_update(self, current_min):
-        return current_min % 30 == 0 and current_min != self._last_update_clock
+        # 31 minutes to allow for weather server to update at 30
+        return current_min % 31 == 0 and current_min != self._last_update_clock
 
     def _check_for_temp_update(self):
         if self._is_updated is False:

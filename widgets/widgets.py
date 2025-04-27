@@ -1,5 +1,6 @@
 import datetime
 from .widget_files import WeatherClient, FacialRecognitionHandler
+from .fonts import FontHandler
 
 
 class Widgets:
@@ -16,6 +17,7 @@ class Widgets:
         self.smart_mirror = smart_mirror
         self.weather_client = WeatherClient()
         self.facial_rec_handler = FacialRecognitionHandler()
+        self.fonts = FontHandler(self.smart_mirror)
         self.facial_rec_handler.start_in_frame_thread()
         self._alpha_full_value = self._MAX_ALPHA
         self._alpha_partial_value = self._MAX_ALPHA
@@ -55,7 +57,7 @@ class Widgets:
                 else:
                     name_str += in_frame_copy[x].title() + ", "
 
-        names = self.smart_mirror.sans_font.render(name_str, True, (255, 255, 255))
+        names = self.fonts.modern_sans_light['large'].render(name_str, True, (255, 255, 255))
         names_rect = names.get_rect()
         names_rect.midtop = self.smart_mirror.screen_rect.midtop
         self.smart_mirror._to_draw.append((names, names_rect))
@@ -64,11 +66,11 @@ class Widgets:
         """Current Date and Time"""
         datetime_now = datetime.datetime.now()
         current_date_str = datetime_now.strftime("%A, %B %-d")
-        current_date = self.smart_mirror.sans_font.render(
+        current_date = self.fonts.modern_sans_light['large'].render(
             current_date_str, True, (255, 255, 255)
         )
         current_time_str = datetime_now.strftime("%-I:%M%p").lower()
-        current_time = self.smart_mirror.sans_font.render(
+        current_time = self.fonts.modern_sans_light['large'].render(
             current_time_str, True, (255, 255, 255)
         )
 
@@ -92,10 +94,10 @@ class Widgets:
 
         location_str, temp_str, icon_path = self.weather_client.get_current_location_weather()
 
-        location = self.smart_mirror.sans_font.render(
+        location = self.fonts.modern_sans_light['large'].render(
         location_str, True, (255, 255, 255)
         )
-        temp = self.smart_mirror.raleway_font.render(
+        temp = self.fonts.raleway_light['large'].render(
             temp_str + f"{degree_symbol}F", True, (255, 255, 255)
         )
         current_icon = self.smart_mirror.import_image(icon_path)

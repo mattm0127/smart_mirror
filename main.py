@@ -1,7 +1,5 @@
 import pygame
 from widgets import Widgets
-import sys
-import os
 import gc
 
 class SmartMirror:
@@ -16,33 +14,6 @@ class SmartMirror:
         pygame.mouse.set_visible(False)
         self.screen_rect = self.screen.get_rect()
         self.clock = pygame.time.Clock()
-        self.sys_font = pygame.font.SysFont(None, size=48)
-        self.font_size = 50
-        self.title_font_size = 20
-
-        if "win" in sys.platform:
-            self.ms_light_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "fonts\ModernSans-Light.otf"
-            )
-            self.m_deco_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "fonts\Modern-Deco.ttf"
-            )
-            self.raleway_light_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "fonts\Raleway-Light.ttf"
-            )
-        else:
-            self.ms_light_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "fonts/ModernSans-Light.otf"
-            )
-            self.m_deco_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "fonts/Modern-Deco.ttf"
-            )
-            self.raleway_light_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), "fonts/Raleway-Light.ttf"
-            )
-        self.deco_font = pygame.font.Font(self.m_deco_path, self.font_size)
-        self.sans_font = pygame.font.Font(self.ms_light_path, self.font_size)
-        self.raleway_font = pygame.font.Font(self.raleway_light_path, self.font_size)
         self.widgets = Widgets(self)
         self._to_draw = []
 
@@ -60,6 +31,9 @@ class SmartMirror:
         self.screen.blits(blit_sequence=self._to_draw)
         pygame.display.flip()
         self._to_draw = []
+
+    def import_font(self, font_path, font_size):
+        return pygame.font.Font(font_path, font_size)
 
     def import_image(self, icon_path):
         """Takes image path from Widgets and imports into pygame
