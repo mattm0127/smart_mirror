@@ -1,6 +1,6 @@
 # Smart Mirror
 
-The **Smart Mirror** is a Python-based application designed to transform a standard mirror into an interactive and intelligent display. It is specifically designed for use with the **Hailo 8L AI Module** and **Raspberry Pi 5**, leveraging their powerful capabilities for efficient edge AI processing. The Smart Mirror also features **facial detection and recognition** to provide a personalized and interactive user experience.
+The **Smart Mirror** is a Python-based application designed to transform a standard mirror into an interactive and intelligent display. It is specifically designed for use with the **Hailo 8L AI Module** and **Raspberry Pi 5**, leveraging their powerful capabilities for efficient edge AI processing. The Smart Mirror also features **facial detection and recognition** to provide a personalized and interactive user experience. Currently Early Work In Progress.
 
 ## Features
 - **Weather Updates**: Displays current weather conditions and forecasts.
