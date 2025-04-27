@@ -1,5 +1,5 @@
 import datetime
-from .widget_files import WeatherClient, FacialRecognitionHandler
+from .widget_handlers import WeatherClient, FacialRecognitionHandler
 from .fonts import FontHandler
 
 

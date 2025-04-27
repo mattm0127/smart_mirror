@@ -44,7 +44,7 @@ class WeatherClient:
         try:
             r = requests.get(url, params=params)
             data = r.json()
-            print("New Weather Data Received")
+            print(f"{datetime.datetime.now().strftime('%H:%M')}New Weather Data Received")
             return data
         except Exception as e:
             print(f'Error retreiving API response: {e}\n Attempting again in 30 minutes')
@@ -73,7 +73,7 @@ class WeatherClient:
 
     def _needs_weather_update(self, current_min):
         # 31 minutes to allow for weather server to update at 30
-        return current_min % 31 == 0 and current_min != self._last_update_clock
+        return current_min % 16 == 1 and current_min != self._last_update_clock
 
     def _check_for_temp_update(self):
         if self._is_updated is False:

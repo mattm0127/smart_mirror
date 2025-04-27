@@ -146,7 +146,6 @@ class FacialRecognition:
             [str,]: List of names associated with faces from frame
         """
         known_encodings, known_names = get_json_file()
-        logger.info("Taking Image to Process.")
         frame = self.picam2.capture_array()
         face_encoding = face_recognition.face_encodings(frame)
         face_names = []
@@ -170,7 +169,6 @@ class FacialRecognition:
             [str,]: List of names associated with faces from frame
         """
         known_encodings, known_names = get_json_file()
-        logger.info("Taking Image to Process.")
         frame = self.picam2.capture_array()
         try:
             detected_faces = self.facial_detect_model(frame)
