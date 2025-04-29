@@ -15,7 +15,7 @@ class SmartMirror:
         self.screen_rect = self.screen.get_rect()
         self.clock = pygame.time.Clock()
         self.widgets = Widgets(self)
-        self._to_draw = []
+
 
     def _check_events(self):
         None
@@ -24,18 +24,14 @@ class SmartMirror:
         """Takes widgets from _to_draw and blits them screen
         """
         self.screen.fill((0, 0, 0))
-        self.widgets.update_alpha_values()
-        self.widgets.face_rec_name()
-        self.widgets.date_and_time()
-        self.widgets.weather_and_location()
-        self.screen.blits(blit_sequence=self._to_draw)
+        self.widgets.create_and_place()
+        self.screen.blits(blit_sequence=self.widgets.screen_obejcts())
         pygame.display.flip()
-        self._to_draw = []
 
     def import_font(self, font_path, font_size):
         return pygame.font.Font(font_path, font_size)
 
-    def import_image(self, icon_path):
+    def import_image(self, icon_path, size=80):
         """Takes image path from Widgets and imports into pygame
 
         Args:
@@ -45,7 +41,7 @@ class SmartMirror:
             Surface: Pygame surface of the icon
         """
         icon = pygame.image.load(icon_path)
-        scaled_icon = pygame.transform.scale(icon, (80, 80))
+        scaled_icon = pygame.transform.scale(icon, (size, size))
         return scaled_icon
 
     def run_program(self):
