@@ -80,8 +80,8 @@ class FacialRecognitionHandler:
         in_frame_thread = threading.Thread(target=self._update_in_frame, daemon=True)
         in_frame_thread.start()
 
-    def add_new_face(self):
-        self.facial_recognition.capture_new_face('matt')
+    def add_new_face(self, name):
+        self.facial_recognition.capture_new_face(name)
         self.facial_recognition.learn_new_faces_hailo()
 
 

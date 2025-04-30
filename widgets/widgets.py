@@ -1,7 +1,9 @@
 import datetime
-from .widget_handlers import WeatherClient, FacialRecognitionHandler
+from .widget_handlers import weather_client, facial_rec_handler
 from .fonts import FontHandler
-
+from decouple import config
+import qrcode
+import os
 
 class Widgets:
     _MAX_ALPHA = 255
@@ -15,8 +17,8 @@ class Widgets:
             smart_mirror (SmartMirror): SmartMirror object
         """
         self.smart_mirror = smart_mirror
-        self.weather_client = WeatherClient()
-        self.facial_rec_handler = FacialRecognitionHandler()
+        self.weather_client = weather_client
+        self.facial_rec_handler = facial_rec_handler
         self.fonts = FontHandler(self.smart_mirror)
         self.facial_rec_handler.start_in_frame_thread()
         self._alpha_full_value = self._MAX_ALPHA
@@ -128,6 +130,8 @@ class Widgets:
         daily_low.set_alpha(self._alpha_full_value)
 
         # Place Rects on screen in relation to eachother
+        # (To make these moveable, separate lower alignment from screen
+        # make a dict that the key is the base starting location and map it to this fucntion)
         location_rect.topright = self.smart_mirror.screen_rect.topright
         current_temp_rect.midtop = location_rect.midbottom
         current_temp_rect.top += self._MARGIN_VALUE
@@ -183,13 +187,33 @@ class Widgets:
         self._to_draw.append((daily_high, daily_high_rect))
         self._to_draw.append((daily_low, daily_low_rect))
 
+    def _flask_qrcode(self):
+        url = f"http://{config('FLASK_IP')}:{config('FLASK_PORT')}"
+        qr_code = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4
+            )
+        qr_code.add_data(url)
+        qr_code.make(fit=True)
+        qr_raw_img = qr_code.make_image(fill_color='white', back_color='black')
+        qr_raw_img.save(os.path.join(os.path.dirname(__file__), 'qr_test.png'))
+        qr_img = self.smart_mirror.import_image(os.path.join(os.path.dirname(__file__), 'qr_test.png'))
+        qr_img_rect = qr_img.get_rect()
+        qr_img.set_alpha(150)
+        qr_img_rect.bottomright = self.smart_mirror.screen_rect.bottomright
+
+        self._to_draw.append((qr_img, qr_img_rect))
+
     def create_and_place(self):
         self._to_draw = []
         self._update_alpha_values()
         self._face_rec_name()
         self._date_and_time()
         self._current_weather_and_location()
+        self._flask_qrcode()
     
-    def screen_obejcts(self):
+    def screen_objects(self):
         return self._to_draw
     
