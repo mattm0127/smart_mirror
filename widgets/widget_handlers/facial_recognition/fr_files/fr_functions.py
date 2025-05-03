@@ -1,14 +1,12 @@
 import logging
 import degirum as dg
-import cv2
 from decouple import config
 import numpy as np
-import json
 from picamera2 import Picamera2
 import time
 import os
 
-# --- Set Up Logging (Cleaner Way) --- Move this to its own file, import to main app
+# --- Set Up Logging (Cleaner Way) --- Move this to its own file, import around facial recognition files
 file_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(file_dir)
 logfile = os.path.join(parent_dir, "facial_rec.log")
@@ -79,40 +77,6 @@ def initialize_models():
     except Exception as e:
         logger.warning(f"Face Recognition model failure: {e}")
     return facial_detect_model, facial_recog_model
-
-
-def crop_face(detected_face, detected_faces):
-    x1, y1, x2, y2 = map(int, detected_face["bbox"])
-    cropped_face = detected_faces.image[y1:y2, x1:x2]
-    cropped_face_scaled = cv2.resize(cropped_face, (112, 112))
-    return cropped_face_scaled
-
-
-def euclidean_distance(encoding1, encoding2):
-    """Calculates the Euclidean distance between two encodings."""
-    return np.sqrt(np.sum((np.array(encoding1) - np.array(encoding2)) ** 2))
-
-
-def get_json_file():
-    json_path = os.path.join(file_dir, "known_faces.json")
-    with open(json_path, "r") as json_data:
-        known_data = json.load(json_data)
-    known_encodings = [np.array(encoding) for encoding in known_data["known_encodings"]]
-    known_names = known_data["known_names"]
-    return known_encodings, known_names
-
-
-def convert_and_save_json(known_encodings, known_names):
-    logger.info("Converting encodings to json")
-    json_encodings = []
-    for encoding in known_encodings:
-        json_encodings.append(list(encoding))
-    json_dict = {"known_encodings": json_encodings, "known_names": known_names}
-    json_file = os.path.join(file_dir, "known_faces.json")
-    with open(json_file, "w") as enc_file:
-        json.dump(json_dict, enc_file, indent=4)
-
-    logger.info("New entry saved.")
 
 
 def picam2_init(width: int = 640, height: int = 640) -> Picamera2:

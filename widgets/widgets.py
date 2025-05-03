@@ -5,6 +5,7 @@ from decouple import config
 import qrcode
 import os
 
+
 class Widgets:
     _MAX_ALPHA = 255
     _PARTIAL_ALPHA = 125
@@ -20,11 +21,12 @@ class Widgets:
         self.weather_client = weather_client
         self.facial_rec_handler = facial_rec_handler
         self.fonts = FontHandler(self.smart_mirror)
-        self.facial_rec_handler.start_in_frame_thread()
+        self.facial_rec_thread = self.facial_rec_handler.start_in_frame_thread()
         self._alpha_full_value = self._MAX_ALPHA
         self._alpha_partial_value = self._MAX_ALPHA
         self._to_draw = []
 
+    # -- Fading algorithm -- #
     def _update_alpha_values(self, time=3, framerate=30):
         """Updates the alpha value for widget fade.
 
@@ -43,6 +45,7 @@ class Widgets:
         if self._alpha_partial_value > self._PARTIAL_ALPHA:
             self._alpha_partial_value -= partial_value_factor
 
+    # -- Facial recognition widget -- #
     def _face_rec_name(self):
         """Current Recognized Face"""
         with self.facial_rec_handler.in_frame_datalock:
@@ -67,6 +70,7 @@ class Widgets:
         names_rect.midtop = self.smart_mirror.screen_rect.midtop
         self._to_draw.append((names, names_rect))
 
+    # -- Date and Time widget -- #
     def _date_and_time(self):
         """Current Date and Time"""
         datetime_now = datetime.datetime.now()
@@ -93,7 +97,8 @@ class Widgets:
         self._to_draw.append((current_date, current_date_rect))
         self._to_draw.append((current_time, current_time_rect))
 
-    def _current_weather_and_location(self):
+    # -- Weather and Locationwidget -- #
+    def _weather_and_location(self):
         """Current Weather and Location"""
 
         location_str, current_temp_str, current_icon_path, daily_temp_strs = (
@@ -145,14 +150,17 @@ class Widgets:
 
         for x in range(len(forecast_5day)):
             day = self.fonts.render_string(
-                forecast_5day[x]['weekday_str'], self.fonts.modern_sans_light['medium'])
+                forecast_5day[x]["weekday_str"], self.fonts.modern_sans_light["medium"]
+            )
             date = self.fonts.render_string(
-                forecast_5day[x]['date_str'], self.fonts.modern_sans_light['small']
+                forecast_5day[x]["date_str"], self.fonts.modern_sans_light["small"]
             )
             high_temp = self.fonts.render_string(
-                forecast_5day[x]['high_str'], self.fonts.raleway_light['medium']
+                forecast_5day[x]["high_str"], self.fonts.raleway_light["medium"]
             )
-            icon = self.smart_mirror.import_image(forecast_5day[x]['icon_path'], size=50)
+            icon = self.smart_mirror.import_image(
+                forecast_5day[x]["icon_path"], size=50
+            )
 
             day_rect = day.get_rect()
             date_rect = date.get_rect()
@@ -168,11 +176,13 @@ class Widgets:
             day_rect.topleft = location_rect.bottomleft
             day_rect.top = (
                 current_icon_rect.bottom + (x * full_height) + self._MARGIN_VALUE
-                )
+            )
             date_rect.topleft = day_rect.bottomleft
             icon_rect.center = date_rect.topright
             high_temp_rect.center = icon_rect.center
-            high_temp_rect.right = self.smart_mirror.screen_rect.right - self._MARGIN_VALUE
+            high_temp_rect.right = (
+                self.smart_mirror.screen_rect.right - self._MARGIN_VALUE
+            )
             icon_rect.right = high_temp_rect.left - self._MARGIN_VALUE
 
             self._to_draw.append((day, day_rect))
@@ -187,33 +197,37 @@ class Widgets:
         self._to_draw.append((daily_high, daily_high_rect))
         self._to_draw.append((daily_low, daily_low_rect))
 
+    # -- Flask QR Code -- #
     def _flask_qrcode(self):
-        url = f"http://{config('FLASK_IP')}:{config('FLASK_PORT')}"
-        qr_code = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4
+        if not os.path.join(os.path.dirname(__file__), "qr_test.png"):
+            url = f"http://{config('FLASK_IP')}:{config('FLASK_PORT')}"
+            qr_code = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
             )
-        qr_code.add_data(url)
-        qr_code.make(fit=True)
-        qr_raw_img = qr_code.make_image(fill_color='white', back_color='black')
-        qr_raw_img.save(os.path.join(os.path.dirname(__file__), 'qr_test.png'))
-        qr_img = self.smart_mirror.import_image(os.path.join(os.path.dirname(__file__), 'qr_test.png'))
+            qr_code.add_data(url)
+            qr_code.make(fit=True)
+            qr_raw_img = qr_code.make_image(fill_color="white", back_color="black")
+            qr_raw_img.save(os.path.join(os.path.dirname(__file__), "qr_test.png"))
+        qr_img = self.smart_mirror.import_image(
+            os.path.join(os.path.dirname(__file__), "qr_test.png")
+        )
         qr_img_rect = qr_img.get_rect()
         qr_img.set_alpha(150)
         qr_img_rect.bottomright = self.smart_mirror.screen_rect.bottomright
 
         self._to_draw.append((qr_img, qr_img_rect))
 
+    # --PyGame functions -- #
     def create_and_place(self):
         self._to_draw = []
         self._update_alpha_values()
         self._face_rec_name()
         self._date_and_time()
-        self._current_weather_and_location()
+        self._weather_and_location()
         self._flask_qrcode()
-    
+
     def screen_objects(self):
         return self._to_draw
-    

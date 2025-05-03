@@ -21,6 +21,7 @@ class WeatherClient:
         self._last_update_clock = None
         self._degree_symbol = chr(0xB0)
 
+    # -- Weather API calling and JSON updating -- #
     def _ensure_weather_json_exists(self):
         if not os.path.exists(self._FORECAST_JSON):
             self._start_request_weather_thread(self._get_forecast_url)
@@ -84,6 +85,7 @@ class WeatherClient:
             self._last_update_clock = current_min
             self._start_request_weather_thread(self._get_forecast_url)
 
+    # -- Get data for current weather widget -- #
     def _get_location(self):
         location = self.forecast["location"]["name"]
         region = self.forecast["location"]["region"]
@@ -127,6 +129,7 @@ class WeatherClient:
 
         return location_str, current_temp_str, current_icon_path, daily_temp_strs
 
+    # -- Get data for forecast widget
     def _get_forcast_icon(self, icon_code):
         icon_path = os.path.join(self._ICON_DIR, f'{icon_code}.png')
         cloudy_icon = os.path.join(self._ICON_DIR, '1009.png')

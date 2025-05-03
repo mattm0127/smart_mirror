@@ -5,7 +5,10 @@ import flask_app
 from decouple import config
 import requests
 import sys
+import signal
 
+
+running = True
 
 class SmartMirror:
 
@@ -17,9 +20,11 @@ class SmartMirror:
         """
         self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         pygame.mouse.set_visible(False)
+        flask_app.start_flask_thread()
         self.screen_rect = self.screen.get_rect()
         self.clock = pygame.time.Clock()
         self.widgets = Widgets(self)
+        self._shutdown_called = False
 
     def _check_events(self):
         None
@@ -31,6 +36,41 @@ class SmartMirror:
         self.widgets.create_and_place()
         self.screen.blits(blit_sequence=self.widgets.screen_objects())
         pygame.display.flip()
+
+    def _shutdown(self):
+        if self._shutdown_called:
+            print("Shutdown already initiated, skipping...")
+            return
+        self._shutdown_called = True
+        print("Initiating shutdown sequence...")
+
+        print("Shutting down Flask server...")
+        try:
+            requests.get(f"http://{config('FLASK_IP')}:{config('FLASK_PORT')}/shutdown", timeout=5)
+            print("Flask server shutdown initiated.")
+        except requests.exceptions.RequestException as e:
+            print(f"Error shutting down Flask server: {e}")
+            # Potentially try a more forceful shutdown if necessary
+
+        self.widgets.facial_rec_handler.stop_event.set()
+        if hasattr(self.widgets, 'facial_rec_thread') and self.widgets.facial_rec_thread.is_alive():
+            print("Waiting for facial recognition thread to finish...")
+            self.widgets.facial_rec_thread.join()  # Add a timeout to prevent indefinite blocking
+        print("Facial Recognition Thread Terminated.")
+
+        print("Releasing camera resources...")
+        try:
+            self.widgets.facial_rec_handler.picam2.close()
+            print("Camera resources released.")
+        except Exception as e:
+            print(f"Error closing Picamera2: {e}")
+
+        print('Closing Pygame')
+        pygame.quit()
+        print('Clearing resources')
+        gc.collect()
+        print("Shutdown complete.")
+        sys.exit(0)
 
     def import_font(self, font_path, font_size):
         return pygame.font.Font(font_path, font_size)
@@ -52,26 +92,17 @@ class SmartMirror:
     def run_program(self):
         """Runs the main loop of the Smart Mirror application
         """
-        try:
-            flask_app.start_flask_thread()
-            while True:
-                self._check_events()
-                self._draw_screen()
-                self.clock.tick(30)   
-        except (SystemExit, KeyboardInterrupt):
-            requests.get(f"http://{config('FLASK_IP')}:{config('FLASK_PORT')}/shutdown")
-            self.widgets.facial_rec_handler.scan_for_faces = False
-        finally:
-            print('Closing Pygame')
-            pygame.quit()
-            print('Clearing resources')
-            self.widgets.facial_rec_handler.picam2.close()
-            gc.collect()
+        while running:
+            self._check_events()
+            self._draw_screen()
+            self.clock.tick(30)  
+
 
 
 def signal_handler(sig, frame):
-    requests.get(f"http://{config('FLASK_IP')}:{config('FLASK_PORT')}/shutdown")
-    sys.exit(0)
+    global running
+    print("Caught CTRL+C, shutting down")
+    running = False
 
     
 if __name__ == "__main__":

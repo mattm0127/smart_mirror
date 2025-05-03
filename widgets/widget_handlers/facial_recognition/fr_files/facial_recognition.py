@@ -2,21 +2,19 @@ import face_recognition
 import numpy as np
 import os
 import time
-from .fr_functions import (
-    logger,
-    crop_face,
-    euclidean_distance,
-    get_json_file,
-    convert_and_save_json,
-)
+import concurrent.futures
+import cv2
+import json
+from .fr_functions import logger
 
 
 class FacialRecognition:
+
     _FILE_DIR = os.path.dirname(os.path.abspath(__file__))
     _JSON_PATH = _FILE_DIR + "/known_faces.json"
     _FACE_PIC_DIR = _FILE_DIR + "/known_faces"
 
-    def __init__(self, picam2, facial_detect_model, facial_recog_model):
+    def __init__(self, picam2):
         """Class to handle all Facial Recognition logic
 
         Args:
@@ -25,9 +23,18 @@ class FacialRecognition:
             facial_recog_model (degirum.Model): Facial recognition model for Hailo 8l
         """
         self.picam2 = picam2
-        self.facial_detect_model = facial_detect_model
-        self.facial_recog_model = facial_recog_model
 
+    def _safe_infer(self, model, *args, timeout=3):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(model, *args)
+            try:
+                return future.result(timeout=timeout)
+            except concurrent.futures.TimeoutError:
+                print("[Facial_Recognition] Timed Out")
+            except Exception as e:
+                print(f"[FacialRecognition] Inference Failed: {e}")
+
+    # -- Capture an Save new face to json -- #
     def _capture_and_save(self, person_name, img_num, person_folder):
         """Capture and save new images of face for model training
 
@@ -71,6 +78,133 @@ class FacialRecognition:
                 person_name=person_name, img_num=x, person_folder=new_person_folder
             )
 
+    # -- Facial Recognition Process Functions-- #
+    def _cropped_faces(self, detected_faces):
+        try:
+            cropped_faces = []
+            for detected_face in detected_faces.results:
+                x1, y1, x2, y2 = map(int, detected_face["bbox"])
+                cropped_face = detected_faces.image[y1:y2, x1:x2]
+                cropped_face_scaled = cv2.resize(cropped_face, (112, 112))
+                cropped_faces.append(cropped_face_scaled)
+            return cropped_faces
+        except Exception as e:
+            logger.error(f"Failed cropping faces: {e}")
+            return
+
+    def _encode_faces(self, cropped_faces, recog_model):
+        try:
+            face_encodings = []
+            for face in cropped_faces:
+                encoding = self._safe_infer(recog_model, face)
+                if encoding:
+                    encoding_array = np.array(encoding.results[0]['data'][0])
+                    face_encodings.append(encoding_array)
+            return face_encodings
+        except Exception as e:
+            logger.error(f"Failed to encode faces: {e}")
+            return 
+
+    def _convert_faces_to_names(self, face_encodings, known_encodings, known_names):
+
+        def _euclidean_distance(encoding1, encoding2):
+            """Calculates the Euclidean distance between two encodings."""
+            return np.sqrt(np.sum((np.array(encoding1) - np.array(encoding2)) ** 2))
+        
+        try:
+            named_faces = []
+            for encoding in face_encodings:
+                distances = [
+                    _euclidean_distance(known_encoding, encoding) for known_encoding in known_encodings
+                    ]
+                best_dist_id = np.argmin(distances)
+                if distances[best_dist_id] < 6.0:
+                    named_faces.append(known_names[best_dist_id])
+                else:
+                    named_faces.append('unknown')
+            return named_faces
+        except Exception as e:
+            logger.error(f"Failed to convert faces to names: {e}")
+
+    def _convert_and_save_json(self, known_encodings, known_names): # Needs Error Correction
+        file_dir = os.path.dirname(os.path.abspath(__file__))
+        logger.info("Converting encodings to json")
+        json_encodings = []
+        for encoding in known_encodings:
+            json_encodings.append(list(encoding))
+        json_dict = {"known_encodings": json_encodings, "known_names": known_names}
+        json_file = os.path.join(file_dir, "known_faces.json")
+        with open(json_file, "w") as enc_file:
+            json.dump(json_dict, enc_file, indent=4)
+
+        logger.info("New entry saved.")
+    
+    def _get_json_file(self):
+        file_dir = os.path.dirname(os.path.abspath(__file__))
+        json_path = os.path.join(file_dir, "known_faces.json")
+        with open(json_path, "r") as json_data:
+            known_data = json.load(json_data)
+        known_encodings = [np.array(encoding) for encoding in known_data["known_encodings"]]
+        known_names = known_data["known_names"]
+        return known_encodings, known_names
+
+    # -- Facial Recognition End-Points -- #
+    def learn_new_faces_hailo(self, detect_model, recog_model):
+        """Train model to learn new faces using custom model on Hailo 8l
+        """
+        known_encodings = []
+        known_names = []
+        logger.info("Creating known face encodings")
+        try:
+            os.makedirs(self._FILE_DIR, exist_ok=True)
+        except OSError as e:
+            logger.error(f"Failed to Create: {e}")
+            
+        if not os.listdir(self._FACE_PIC_DIR):
+            print("No faces saved, your first.")
+            name = input("What is your name: ")
+            self.capture_new_face(name)
+        try:
+            for person_name in os.listdir(self._FACE_PIC_DIR):
+                person_dir = os.path.join(self._FACE_PIC_DIR, person_name)
+                for filename in os.listdir(person_dir):
+                    if filename.endswith(".jpg"):
+                        img_path = os.path.join(person_dir, filename)
+                        try:
+                            detected_faces = self._safe_infer(detect_model, img_path)
+                            cropped_faces = self._cropped_faces(detected_faces)
+                            encoding_results = self._encode_faces(cropped_faces, recog_model)
+                            known_encodings.append(
+                                encoding_results[0]
+                            )  # Assuming only one face in learning image
+                            known_names.append(person_name)
+                        except Exception as e:
+                            logger.error(f"Failed to encode {person_name}, {img_path}: {e}")
+            self._convert_and_save_json(known_encodings, known_names)
+        except Exception as e:
+            print(f"{e}")
+
+    def process_new_image_hailo(self, detect_model, recog_model):
+        """Perform Facial Detection and Recognition on new frame using
+        custom model on Hailo 8l
+
+        Returns:
+            [str,]: List of names associated with faces from frame
+        """
+        known_encodings, known_names = self._get_json_file()
+        frame = self.picam2.capture_array()
+        try:
+            detected_faces = self._safe_infer(detect_model, frame)
+            cropped_faces = self._cropped_faces(detected_faces)
+            face_encodings = self._encode_faces(cropped_faces, recog_model)
+            named_faces = self._convert_faces_to_names(
+                face_encodings, known_encodings, known_names)
+            return named_faces
+        except Exception as e:
+            print(f"Failed to process new image: {e}")
+
+
+    # -- Functions for Non-Hailo Based Facial Recognition -- #
     def learn_new_faces_cpu(self):
         """Train model to learn new faces using FaceRecognition module on CPU
         """
@@ -99,44 +233,7 @@ class FacialRecognition:
                     except Exception as e:
                         logger.error(f"Failed to encode {person_name}, {img_path}: {e}")
 
-        convert_and_save_json(known_encodings, known_names)
-
-    def learn_new_faces_hailo(self):
-        """Train model to learn new faces using custom model on Hailo 8l
-        """
-        known_encodings = []
-        known_names = []
-        logger.info("Creating known face encodings")
-        try:
-            os.listdir(self._FACE_PIC_DIR)
-        except Exception:
-            os.mkdir(self._FACE_PIC_DIR)
-
-        if not os.listdir(self._FACE_PIC_DIR):
-            print("No faces saved, your first.")
-            name = input("What is your name: ")
-            self.capture_new_face(name)
-
-        for person_name in os.listdir(self._FACE_PIC_DIR):
-            person_dir = os.path.join(self._FACE_PIC_DIR, person_name)
-            for filename in os.listdir(person_dir):
-                if filename.endswith(".jpg"):
-                    img_path = os.path.join(person_dir, filename)
-                    try:
-                        detected_faces = self.facial_detect_model(img_path)
-                        for detected_face in detected_faces.results:
-                            cropped_face = crop_face(detected_face, detected_faces)
-                            encodings = self.facial_recog_model(cropped_face).results[
-                                0
-                            ]["data"][0]
-                        if encodings:
-                            known_encodings.append(
-                                np.array(encodings)
-                            )  # Assuming only one face in learning image
-                            known_names.append(person_name)
-                    except Exception as e:
-                        logger.error(f"Failed to encode {person_name}, {img_path}: {e}")
-        convert_and_save_json(known_encodings, known_names)
+        self._convert_and_save_json(known_encodings, known_names)
 
     def process_new_image_cpu(self):
         """Perform Facial Detection and Recognition on new frame using
@@ -145,7 +242,7 @@ class FacialRecognition:
         Returns:
             [str,]: List of names associated with faces from frame
         """
-        known_encodings, known_names = get_json_file()
+        known_encodings, known_names = self._get_json_file()
         frame = self.picam2.capture_array()
         face_encoding = face_recognition.face_encodings(frame)
         face_names = []
@@ -160,43 +257,6 @@ class FacialRecognition:
                 name = known_names[best_dist_id]
             face_names.append(name)
         return face_names
-
-    def process_new_image_hailo(self):
-        """Perform Facial Detection and Recognition on new frame using
-        custom model on Hailo 8l
-
-        Returns:
-            [str,]: List of names associated with faces from frame
-        """
-        known_encodings, known_names = get_json_file()
-        frame = self.picam2.capture_array()
-        try:
-            detected_faces = self.facial_detect_model(frame)
-
-        except Exception as e:
-            print(e)
-        cropped_faces = [
-            crop_face(detected_face, detected_faces)
-            for detected_face in detected_faces.results
-        ]
-        face_encoding = []
-        for face in cropped_faces:
-            face_encoding.append(
-                np.array(self.facial_recog_model(face).results[0]["data"][0])
-            )
-        face_names = []
-        for face in face_encoding:
-            distances = [
-                euclidean_distance(known_face, face) for known_face in known_encodings
-            ]
-            best_dist_id = np.argmin(distances)
-            if distances[best_dist_id] < 6.0:
-                name = known_names[best_dist_id]
-            else:
-                name = "unknown"
-            face_names.append(name)
-        return face_names
-
 
 if __name__ == "__main__":
     None
